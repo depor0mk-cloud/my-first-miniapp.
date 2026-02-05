@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hakos Clicker Ultimate</title>
+    <title>Hakos Clicker Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --primary: #38bdf8;
             --bg: #0f172a;
+            --accent: #38bdf8;
             --card: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* Убирает синий квадрат */
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             background-color: var(--bg);
-            color: white;
+            color: var(--text-main);
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -25,215 +32,291 @@
             user-select: none;
         }
 
-        /* Меню сверху справа */
-        .header-menu {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
+        /* Шапка */
+        .header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .menu-btn {
+        .stat-badge {
             background: var(--card);
-            border: 2px solid var(--primary);
-            color: white;
-            padding: 10px;
+            padding: 8px 16px;
             border-radius: 12px;
-            font-weight: bold;
-            cursor: pointer;
+            border: 1px solid #334155;
+            font-size: 14px;
         }
 
-        /* Контейнер очков */
-        #score-container { margin-top: 80px; text-align: center; }
-        #score { font-size: 56px; font-weight: 900; color: var(--primary); text-shadow: 0 0 20px rgba(56,189,248,0.3); }
-        #pps { color: #94a3b8; font-size: 18px; margin-top: 5px; }
+        /* Счет */
+        #score-container {
+            text-align: center;
+            margin-top: 20px;
+        }
 
-        /* Главная кнопка с буквой H */
+        #score {
+            font-size: 64px;
+            font-weight: 800;
+            background: linear-gradient(to bottom, #fff, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 3D Кнопка */
+        .btn-wrapper {
+            margin-top: 50px;
+            position: relative;
+        }
+
         #click-btn {
-            width: 240px;
-            height: 240px;
-            background: radial-gradient(circle, #0ea5e9 0%, #0284c7 100%);
+            width: 220px;
+            height: 220px;
+            background: #0284c7;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 40px;
             cursor: pointer;
-            box-shadow: 0 0 50px rgba(2, 132, 199, 0.5);
-            transition: transform 0.05s;
-            border: 10px solid rgba(255,255,255,0.05);
+            position: relative;
+            box-shadow: 
+                0 15px 0 #0369a1, /* Глубина кнопки */
+                0 20px 30px rgba(0,0,0,0.5);
+            transition: all 0.05s ease;
+            border: none;
         }
 
-        #click-btn:active { transform: scale(0.95); }
+        #click-btn:active {
+            transform: translateY(10px); /* Вдавливание */
+            box-shadow: 
+                0 5px 0 #0369a1,
+                0 10px 20px rgba(0,0,0,0.5);
+        }
 
         .h-logo {
-            font-size: 120px;
+            font-size: 110px;
             font-weight: 900;
-            font-family: 'Arial Black', sans-serif;
             color: white;
-            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+            text-shadow: 0 4px 4px rgba(0,0,0,0.2);
         }
 
-        /* Магазин (боковое меню) */
-        .side-menu {
+        /* Навигация */
+        .nav-bar {
             position: fixed;
-            top: 0;
-            right: -100%;
-            width: 80%;
-            height: 100%;
-            background: var(--card);
-            transition: 0.3s;
-            z-index: 200;
-            padding: 20px;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            bottom: 30px;
+            display: flex;
+            gap: 15px;
+            width: 90%;
         }
 
-        .side-menu.active { right: 0; }
-
-        .close-btn { color: var(--primary); font-weight: bold; margin-bottom: 20px; display: block; }
-
-        .item {
-            background: #0f172a;
+        .nav-btn {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid #334155;
+            color: white;
             padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 15px;
+            border-radius: 16px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Магазин и Лидеры (Overlay) */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            display: none;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .overlay.active { display: block; }
+
+        .close-btn {
+            padding: 10px;
+            background: var(--card);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .shop-item {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border: 1px solid #334155;
         }
 
         .buy-btn {
-            width: 100%;
-            background: var(--primary);
-            color: #0f172a;
+            background: var(--accent);
+            color: #000;
             border: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            margin-top: 10px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-weight: 800;
         }
 
-        .buy-btn:disabled { background: #475569; }
+        .buy-btn:disabled { opacity: 0.3; }
 
-        /* Таблица лидеров (заглушка) */
-        #leaderboard-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            z-index: 300;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #334155;
         }
     </style>
 </head>
 <body>
 
-    <div class="header-menu">
-        <button class="menu-btn" onclick="toggleShop(true)">МАГАЗИН</button>
-        <button class="menu-btn" onclick="toggleLeaderboard(true)">🏆</button>
+    <div class="header">
+        <div class="stat-badge">🔋 Оффлайн: 3ч макс</div>
+        <div class="stat-badge" id="pps-display">0/сек</div>
     </div>
 
     <div id="score-container">
         <div id="score">0</div>
-        <div id="pps">Добыча: 0/сек</div>
     </div>
 
-    <div id="click-btn" onclick="handleClick()">
-        <span class="h-logo">H</span>
+    <div class="btn-wrapper">
+        <button id="click-btn" onclick="handleClick()">
+            <span class="h-logo">H</span>
+        </button>
     </div>
 
-    <div id="shop" class="side-menu">
-        <span class="close-btn" onclick="toggleShop(false)">← НАЗАД</span>
-        <h2>Улучшения</h2>
-        <div class="item">
-            <b>🤖 Видеокарта (+1/сек)</b>
-            <div id="cost1">Цена: 50</div>
-            <button class="buy-btn" id="btn1" onclick="buyItem(1)">Купить</button>
-        </div>
-        <div class="item">
-            <b>🏢 Дата-центр (+10/сек)</b>
-            <div id="cost2">Цена: 500</div>
-            <button class="buy-btn" id="btn2" onclick="buyItem(2)">Купить</button>
-        </div>
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="openOverlay('shop')">🛒 <span>Магазин</span></button>
+        <button class="nav-btn" onclick="openOverlay('leaders')">🏆 <span>Лидеры</span></button>
     </div>
 
-    <div id="leaderboard-overlay">
-        <h2>Таблица лидеров</h2>
-        <div style="background: var(--card); padding: 20px; border-radius: 15px; width: 80%;">
-            <p>1. Ты (Легенда) — <span id="user-top-score">0</span></p>
-            <p style="color: #64748b;">Здесь скоро появятся твои друзья...</p>
-        </div>
-        <button class="menu-btn" style="margin-top: 20px;" onclick="toggleLeaderboard(false)">ЗАКРЫТЬ</button>
+    <div id="shop" class="overlay">
+        <div class="close-btn" onclick="closeOverlays()">← Назад</div>
+        <h2>Маркетплейс</h2>
+        <div id="shop-list"></div>
+    </div>
+
+    <div id="leaders" class="overlay">
+        <div class="close-btn" onclick="closeOverlays()">← Назад</div>
+        <h2>Топ игроков (Анонимно)</h2>
+        <div id="leader-list">
+            </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation();
 
-        let score = parseFloat(localStorage.getItem('score')) || 0;
-        let pps = parseFloat(localStorage.getItem('pps')) || 0;
-        let item1Cost = parseInt(localStorage.getItem('item1Cost')) || 50;
-        let item2Cost = parseInt(localStorage.getItem('item2Cost')) || 500;
-        let lastExit = parseInt(localStorage.getItem('lastExit')) || Date.now();
+        let score = parseFloat(localStorage.getItem('h_score')) || 0;
+        let pps = parseFloat(localStorage.getItem('h_pps')) || 0;
+        
+        const items = [
+            { id: 0, name: "CPU i3", pps: 0.5, cost: 50 },
+            { id: 1, name: "GPU RTX 4090", pps: 3, cost: 250 },
+            { id: 2, name: "ASIC Miner", pps: 12, cost: 1200 },
+            { id: 3, name: "Серверная стойка", pps: 50, cost: 7500 },
+            { id: 4, name: "Квантовый узел", pps: 200, cost: 50000 }
+        ];
 
-        // Логика оффлайна (3 часа = 10800 секунд)
-        function checkOffline() {
-            let now = Date.now();
-            let diff = Math.floor((now - lastExit) / 1000); // секунд прошло
-            if (diff > 0 && pps > 0) {
-                let offlineTime = Math.min(diff, 10800); // не больше 3 часов
-                let reward = offlineTime * pps;
-                score += reward;
-                alert(`Вас не было ${Math.floor(offlineTime/60)} мин. Заводы принесли: ${reward} очков!`);
+        let itemCosts = JSON.parse(localStorage.getItem('h_costs')) || items.map(i => i.cost);
+
+        function openOverlay(id) {
+            document.getElementById(id).classList.add('active');
+            if(id === 'leaders') renderLeaders();
+            if(id === 'shop') renderShop();
+        }
+
+        function closeOverlays() {
+            document.querySelectorAll('.overlay').forEach(el => el.classList.remove('active'));
+        }
+
+        function renderShop() {
+            let html = '';
+            items.forEach((item, i) => {
+                html += `
+                    <div class="shop-item">
+                        <div>
+                            <b>${item.name}</b><br>
+                            <small style="color:#94a3b8">+${item.pps}/сек</small>
+                        </div>
+                        <button class="buy-btn" ${score < itemCosts[i] ? 'disabled' : ''} onclick="buy(${i})">
+                            ${Math.floor(itemCosts[i])}
+                        </button>
+                    </div>
+                `;
+            });
+            document.getElementById('shop-list').innerHTML = html;
+        }
+
+        function renderLeaders() {
+            let html = '';
+            for(let i=1; i<=5; i++) {
+                let isYou = i === 1;
+                html += `
+                    <div class="leader-row" style="${isYou ? 'color:#38bdf8' : ''}">
+                        <span>#${i} Игрок_${Math.floor(Math.random()*9000)+1000} ${isYou ? '(Вы)' : ''}</span>
+                        <b>${isYou ? Math.floor(score) : Math.floor(100000 / i)}</b>
+                    </div>
+                `;
             }
-        }
-
-        function toggleShop(show) {
-            document.getElementById('shop').classList.toggle('active', show);
-        }
-
-        function toggleLeaderboard(show) {
-            document.getElementById('leaderboard-overlay').style.display = show ? 'flex' : 'none';
-            document.getElementById('user-top-score').innerText = Math.floor(score);
-        }
-
-        function updateUI() {
-            document.getElementById('score').innerText = Math.floor(score);
-            document.getElementById('pps').innerText = `Добыча: ${pps}/сек`;
-            document.getElementById('cost1').innerText = `Цена: ${item1Cost}`;
-            document.getElementById('cost2').innerText = `Цена: ${item2Cost}`;
-            document.getElementById('btn1').disabled = score < item1Cost;
-            document.getElementById('btn2').disabled = score < item2Cost;
+            document.getElementById('leader-list').innerHTML = html;
         }
 
         function handleClick() {
             score += 1;
-            updateUI();
+            update();
+            // Легкая вибрация при клике
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         }
 
-        function buyItem(id) {
-            if (id === 1 && score >= item1Cost) {
-                score -= item1Cost; pps += 1;
-                item1Cost = Math.floor(item1Cost * 1.5);
-            } else if (id === 2 && score >= item2Cost) {
-                score -= item2Cost; pps += 10;
-                item2Cost = Math.floor(item2Cost * 1.6);
+        function buy(i) {
+            if(score >= itemCosts[i]) {
+                score -= itemCosts[i];
+                pps += items[i].pps;
+                itemCosts[i] *= 1.6; // Инфляция 60%
+                update();
+                renderShop();
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             }
-            updateUI();
+        }
+
+        function update() {
+            document.getElementById('score').innerText = Math.floor(score);
+            document.getElementById('pps-display').innerText = pps.toFixed(1) + '/сек';
+            localStorage.setItem('h_score', score);
+            localStorage.setItem('h_pps', pps);
+            localStorage.setItem('h_costs', JSON.stringify(itemCosts));
+            localStorage.setItem('h_last', Date.now());
+        }
+
+        // Оффлайн доход
+        function checkOffline() {
+            let last = localStorage.getItem('h_last');
+            if(last && pps > 0) {
+                let diff = (Date.now() - parseInt(last)) / 1000;
+                let offlineSec = Math.min(diff, 10800); // 3 часа макс
+                if(offlineSec > 10) {
+                    let gain = offlineSec * pps;
+                    score += gain;
+                    alert("За время отсутствия намайнено: " + Math.floor(gain));
+                }
+            }
         }
 
         setInterval(() => {
             score += pps;
-            updateUI();
-            localStorage.setItem('score', score);
-            localStorage.setItem('pps', pps);
-            localStorage.setItem('item1Cost', item1Cost);
-            localStorage.setItem('item2Cost', item2Cost);
-            localStorage.setItem('lastExit', Date.now());
+            update();
         }, 1000);
 
         checkOffline();
-        updateUI();
+        update();
     </script>
 </body>
 </html>
