@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Hakos Star: Fixed Edition</title>
+    <title>Hakos Star: Final Layout</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -23,19 +23,22 @@
             color: white; margin: 0; height: 100vh;
             display: flex; flex-direction: column; align-items: center;
             overflow: hidden; 
-            padding-top: 220px; /* Опустил ВЕСЬ интерфейс максимально вниз */
+            /* МАКСИМАЛЬНО ОПУСТИЛ ВСЁ ВНИЗ */
+            padding-top: 300px; 
         }
 
+        /* Узкая карточка счета */
         .score-card {
             background: var(--glass); backdrop-filter: blur(25px);
             border: 1px solid var(--glass-border);
-            padding: 15px 40px; border-radius: 24px;
+            padding: 15px 20px; border-radius: 24px;
             text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            margin-bottom: 20px; width: 85%;
+            margin-bottom: 15px; 
+            width: 75%; /* Края теперь уже */
         }
 
         #score {
-            font-size: 44px; font-weight: 900; margin: 0;
+            font-size: 40px; font-weight: 900; margin: 0;
             background: linear-gradient(to bottom, #fff, #a855f7);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
@@ -44,15 +47,15 @@
 
         .menu-trigger {
             background: var(--glass); border: 1px solid var(--glass-border);
-            color: white; padding: 12px 35px; border-radius: 16px;
+            color: white; padding: 12px 30px; border-radius: 16px;
             font-weight: 800; font-size: 13px; backdrop-filter: blur(10px);
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .game-container { flex-grow: 1; display: flex; flex-direction: column; align-items: center; width: 100%; }
         
         #main-target {
-            width: 190px; height: 190px; border-radius: 50%;
+            width: 180px; height: 180px; border-radius: 50%;
             background: var(--premium); display: flex; justify-content: center; align-items: center;
             box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
             transition: all 0.2s ease; cursor: pointer; border: 4px solid rgba(255,255,255,0.2);
@@ -63,9 +66,9 @@
         #main-target.active-x3 { background: var(--gold) !important; box-shadow: 0 0 60px var(--gold); }
         
         #main-target:active:not(.broken) { transform: scale(0.92); }
-        .star-icon { width: 85px; fill: white; }
+        .star-icon { width: 80px; fill: white; }
 
-        .combo-box { width: 70%; margin-top: 25px; text-align: center; }
+        .combo-box { width: 70%; margin-top: 20px; text-align: center; }
         .bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 10px; }
         #bar-fill { width: 0%; height: 100%; background: var(--premium); transition: width 0.1s linear; }
         #bar-fill.cooldown { background: #475569 !important; }
@@ -79,8 +82,7 @@
         .side-panel.open { right: 0; }
         .shop-scroll { height: 50vh; overflow-y: auto; }
         .item-row { background: var(--glass); padding: 14px; border-radius: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--glass-border); }
-        .btn-buy { background: white; color: black; border: none; padding: 10px 14px; border-radius: 10px; font-weight: bold; font-size: 12px; }
-        .btn-buy:disabled { opacity: 0.3; }
+        .btn-buy { background: white; color: black; border: none; padding: 10px 14px; border-radius: 10px; font-weight: bold; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -141,11 +143,9 @@
 
         function doTap() {
             if (isBroken) return;
-
             let now = Date.now();
             let delta = now - lastTapTime;
             lastTapTime = now;
-
             tapCount = delta < 150 ? tapCount + 1 : 0;
             if (tapCount > 18) {
                 document.getElementById('main-target').classList.add('overheating');
@@ -153,10 +153,7 @@
             } else {
                 document.getElementById('main-target').classList.remove('overheating');
             }
-
-            if (isCooldown) {
-                score += power;
-            } else {
+            if (isCooldown) { score += power; } else {
                 let m = isX3 ? 3 : 1;
                 score += (power * m);
                 if (!isX3) {
@@ -164,8 +161,7 @@
                     if (combo >= 100) startX3();
                 }
             }
-            
-            if (Math.random() < 0.0009) { stars++; }
+            if (Math.random() < 0.0009) stars++;
             updateUI();
             window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
         }
@@ -174,8 +170,7 @@
             isX3 = true;
             document.getElementById('main-target').classList.add('active-x3');
             setTimeout(() => {
-                isX3 = false;
-                combo = 0;
+                isX3 = false; combo = 0;
                 document.getElementById('main-target').classList.remove('active-x3');
                 startCooldown();
             }, 10000);
@@ -209,8 +204,7 @@
             isBroken = true;
             document.getElementById('main-target').className = "broken";
             document.getElementById('target-content').innerHTML = "<span style='font-size:40px;'>🛠</span>";
-            let repairEnd = Date.now() + (5 * 60 * 1000);
-            localStorage.setItem('repair_end', repairEnd);
+            localStorage.setItem('repair_end', Date.now() + (5 * 60 * 1000));
             checkRepair();
         }
 
@@ -278,9 +272,7 @@
         }
 
         setInterval(() => { if (pps > 0) { score += pps; updateUI(); save(); } }, 1000);
-        checkCooldown();
-        checkRepair();
-        updateUI();
+        checkCooldown(); checkRepair(); updateUI();
     </script>
 </body>
 </html>
