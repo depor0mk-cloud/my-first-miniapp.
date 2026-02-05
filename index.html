@@ -3,252 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Hakos Premium Glass</title>
+    <title>Hakos Star Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg: #020617;
-            --glass: rgba(255, 255, 255, 0.05);
+            --glass: rgba(255, 255, 255, 0.07);
             --glass-border: rgba(255, 255, 255, 0.15);
-            --accent: #a855f7;
+            --premium: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+            --gold: #ffb000;
         }
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: 'Inter', sans-serif;
             background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
-            color: white;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow: hidden;
-            padding-top: env(safe-area-inset-top);
+            color: white; margin: 0; height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            overflow: hidden; padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
         }
 
-        /* Кнопка магазина сверху */
-        .header-nav {
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            justify-content: flex-end;
-            z-index: 100;
+        /* Шапка с кнопкой Магазина */
+        .header { width: 100%; display: flex; justify-content: flex-end; padding: 10px 0; }
+        .menu-btn {
+            background: var(--glass); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); color: white;
+            padding: 8px 16px; border-radius: 12px; font-weight: bold;
         }
 
-        .menu-trigger {
-            background: var(--glass);
-            backdrop-filter: blur(15px);
+        /* Стеклянный счет */
+        .score-card {
+            background: var(--glass); backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* Счет */
-        #score-container {
-            text-align: center;
-            margin-top: 20px;
-            z-index: 10;
+            padding: 20px 40px; border-radius: 30px;
+            text-align: center; margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            min-width: 200px; cursor: pointer;
         }
 
         #score {
-            font-size: 80px;
-            font-weight: 900;
-            margin: 0;
+            font-size: 56px; font-weight: 900; margin: 0;
             background: linear-gradient(to bottom, #fff, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            drop-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* Центральная Кнопка-Звезда */
-        .main-btn-area {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .stars-count { color: var(--gold); font-weight: bold; font-size: 18px; margin-top: 5px; }
+
+        /* Главная кнопка */
+        .game-area { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
+        
+        #main-btn {
+            width: 220px; height: 220px; border-radius: 50%;
+            background: var(--premium); display: flex; justify-content: center; align-items: center;
+            border: 4px solid rgba(255,255,255,0.2);
+            box-shadow: 0 0 50px rgba(168, 85, 247, 0.3);
+            transition: transform 0.05s; cursor: pointer;
         }
+        #main-btn.combo-active { box-shadow: 0 0 70px var(--gold); background: var(--gold); }
+        #main-btn:active { transform: scale(0.92); }
 
-        #star-btn {
-            width: 240px;
-            height: 240px;
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.8), rgba(99, 102, 241, 0.8));
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            border: 2px solid rgba(255,255,255,0.3);
-            box-shadow: 0 0 50px rgba(168, 85, 247, 0.3), inset 0 0 30px rgba(255,255,255,0.2);
-            transition: transform 0.05s, box-shadow 0.2s;
-        }
+        .star-svg { width: 110px; fill: white; }
 
-        #star-btn:active { transform: scale(0.9); }
+        /* Шкала Комбо */
+        .combo-container { width: 80%; height: 10px; background: var(--glass); border-radius: 5px; margin-top: 40px; overflow: hidden; border: 1px solid var(--glass-border); }
+        #combo-fill { width: 0%; height: 100%; background: var(--premium); transition: width 0.2s linear; }
+        #combo-fill.max { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
 
-        .star-svg { width: 120px; fill: white; filter: drop-shadow(0 0 15px white); }
-
-        /* Боковое меню (Магазин) */
+        /* Магазин (Боковое меню) */
         .side-menu {
-            position: fixed;
-            top: 0; right: -100%;
-            width: 85%; height: 100%;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(40px); /* Максимальное стекло */
-            border-left: 1px solid var(--glass-border);
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 200;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
+            position: fixed; top: 0; right: -100%; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(30px);
+            z-index: 1000; transition: 0.4s; padding: 60px 20px;
         }
-
         .side-menu.active { right: 0; }
+        .close-area { color: #a855f7; font-weight: bold; margin-bottom: 30px; }
 
-        .close-menu { margin-bottom: 20px; color: var(--accent); font-weight: bold; cursor: pointer; }
-
-        .shop-scroll { overflow-y: auto; flex-grow: 1; padding-right: 5px; }
-
-        .item-card {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            padding: 15px;
-            border-radius: 20px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .buy-btn {
-            background: #fff;
-            color: #000;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-weight: 900;
-            cursor: pointer;
-        }
-
-        .buy-btn:disabled { background: #475569; color: #94a3b8; }
-
-        .stat-badge { font-size: 14px; color: #94a3b8; margin-top: 5px; }
+        .item { background: var(--glass); padding: 15px; border-radius: 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--glass-border); }
+        .buy-btn { background: white; color: black; border: none; padding: 10px 15px; border-radius: 12px; font-weight: bold; }
+        .buy-btn:disabled { opacity: 0.3; }
     </style>
 </head>
 <body>
 
-    <div class="header-nav">
-        <button class="menu-trigger" onclick="toggleMenu(true)">МАГАЗИН</button>
+    <div class="header">
+        <button class="menu-btn" onclick="toggleShop(true)">МАГАЗИН</button>
     </div>
 
-    <div id="score-container">
-        <div class="stat-badge" id="click-info">Клик: +1</div>
+    <div class="score-card" onclick="askPromo()">
+        <p style="margin:0; font-size:12px; color:#94a3b8; font-weight:bold;">SCORE</p>
         <h1 id="score">0</h1>
-        <div class="stat-badge" id="pps-info">Доход: 0/сек</div>
+        <div class="stars-count">✨ Звезды: <span id="stars-val">0</span></div>
     </div>
 
-    <div class="main-btn-area">
-        <div id="star-btn" onclick="handleTap()">
+    <div class="game-area">
+        <div id="main-btn" onclick="handleTap()">
             <svg class="star-svg" viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
+        </div>
+
+        <div id="combo-text" style="margin-top:20px; font-weight:900; height:20px;"></div>
+        <div class="combo-container">
+            <div id="combo-fill"></div>
         </div>
     </div>
 
     <div id="shop" class="side-menu">
-        <div class="close-menu" onclick="toggleMenu(false)">← ЗАКРЫТЬ</div>
-        <h2>Улучшения</h2>
-        <div class="shop-scroll" id="shop-list">
-            </div>
+        <div class="close-area" onclick="toggleShop(false)">← НАЗАД В ИГРУ</div>
+        <div id="shop-content"></div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        let score = parseFloat(localStorage.getItem('g_score')) || 0;
-        let pps = parseFloat(localStorage.getItem('g_pps')) || 0;
-        let power = parseInt(localStorage.getItem('g_power')) || 1;
+        let score = parseFloat(localStorage.getItem('h_score')) || 0;
+        let pps = parseFloat(localStorage.getItem('h_pps')) || 0;
+        let power = parseInt(localStorage.getItem('h_power')) || 1;
+        let stars = parseInt(localStorage.getItem('h_stars')) || 0;
+        
+        let combo = 0;
+        let comboTimer = null;
 
         const shopItems = [
-            { id: 'p1', name: 'Сила клика +2', base: 150, type: 'click', val: 2 },
-            { id: 'p2', name: 'Сила клика +10', base: 1000, type: 'click', val: 10 },
-            { id: 'm1', name: 'Мини-ферма', base: 50, type: 'pps', val: 0.5 },
-            { id: 'm2', name: 'Видеокарта', base: 400, type: 'pps', val: 3 },
-            { id: 'm3', name: 'Сервер', base: 2500, type: 'pps', val: 15 },
-            { id: 'm4', name: 'Квантовый ПК', base: 15000, type: 'pps', val: 80 }
+            { id: 'c1', name: 'Сила клика +2', base: 150, type: 'power', val: 2 },
+            { id: 'p1', name: 'Микро-ферма', base: 50, type: 'pps', val: 0.5 },
+            { id: 'p2', name: 'Сервер', base: 500, type: 'pps', val: 5 }
         ];
 
-        let costs = JSON.parse(localStorage.getItem('g_costs')) || {};
+        let costs = JSON.parse(localStorage.getItem('h_costs')) || {};
         shopItems.forEach(i => { if(!costs[i.id]) costs[i.id] = i.base; });
 
-        function toggleMenu(show) {
-            document.getElementById('shop').classList.toggle('active', show);
-            if(show) renderShop();
+        function handleTap() {
+            let multiplier = (combo >= 100) ? 3 : 1;
+            score += (power * multiplier);
+            
+            // Шанс на звезду 0.09%
+            if (Math.random() < 0.0009) {
+                stars++;
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                alert("РЕДКОСТЬ! Ты нашел Звезду ✨");
+            }
+
+            // Логика комбо
+            combo = Math.min(combo + 5, 100);
+            resetComboTimer();
+            
+            updateUI();
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        function resetComboTimer() {
+            clearTimeout(comboTimer);
+            comboTimer = setInterval(() => {
+                combo = Math.max(combo - 2, 0);
+                updateUI();
+                if(combo === 0) clearInterval(comboTimer);
+            }, 100);
+        }
+
+        function askPromo() {
+            let code = prompt("Введите промокод:");
+            if(code === 'hk') {
+                if(localStorage.getItem('promo_hk')) return alert("Уже использован!");
+                score += 27;
+                localStorage.setItem('promo_hk', 'true');
+                updateUI();
+                alert("Зачислено 27 очков!");
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = Math.floor(score);
+            document.getElementById('stars-val').innerText = stars;
+            
+            let fill = document.getElementById('combo-fill');
+            fill.style.width = combo + "%";
+            
+            let btn = document.getElementById('main-btn');
+            let txt = document.getElementById('combo-text');
+            
+            if(combo >= 100) {
+                fill.classList.add('max');
+                btn.classList.add('combo-active');
+                txt.innerText = "COMBO X3 🔥";
+                txt.style.color = "#ffb000";
+            } else {
+                fill.classList.remove('max');
+                btn.classList.remove('combo-active');
+                txt.innerText = combo > 20 ? "ТАПАЙ БЫСТРЕЕ!" : "";
+                txt.style.color = "white";
+            }
+        }
+
+        function toggleShop(open) {
+            document.getElementById('shop').classList.toggle('active', open);
+            if(open) renderShop();
         }
 
         function renderShop() {
             let html = '';
             shopItems.forEach(item => {
                 let cost = Math.floor(costs[item.id]);
-                html += `
-                    <div class="item-card">
-                        <div>
-                            <b>${item.name}</b><br>
-                            <small>${item.type === 'click' ? '+'+item.val+' к клику' : '+'+item.val+'/сек'}</small><br>
-                            <span style="color:var(--accent)">${cost} очков</span>
-                        </div>
-                        <button class="buy-btn" ${score < cost ? 'disabled' : ''} onclick="buy('${item.id}')">КУПИТЬ</button>
-                    </div>
-                `;
+                html += `<div class="item">
+                    <div><b>${item.name}</b><br><small>Цена: ${cost}</small></div>
+                    <button class="buy-btn" ${score < cost ? 'disabled' : ''} onclick="buy('${item.id}')">КУПИТЬ</button>
+                </div>`;
             });
-            document.getElementById('shop-list').innerHTML = html;
-        }
-
-        function handleTap() {
-            score += power;
-            updateUI();
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('shop-content').innerHTML = html;
         }
 
         function buy(id) {
             let item = shopItems.find(i => i.id === id);
-            let cost = costs[id];
-            if(score >= cost) {
-                score -= cost;
-                if(item.type === 'click') power += item.val;
+            if(score >= costs[id]) {
+                score -= costs[id];
+                if(item.type === 'power') power += item.val;
                 else pps += item.val;
-                costs[id] *= 1.6; // Инфляция
-                save();
-                updateUI();
-                renderShop();
+                costs[id] *= 1.6;
+                save(); updateUI(); renderShop();
             }
         }
 
-        function updateUI() {
-            document.getElementById('score').innerText = Math.floor(score);
-            document.getElementById('click-info').innerText = `Клик: +${power}`;
-            document.getElementById('pps-info').innerText = `Доход: ${pps.toFixed(1)}/сек`;
-        }
-
         function save() {
-            localStorage.setItem('g_score', score);
-            localStorage.setItem('g_pps', pps);
-            localStorage.setItem('g_power', power);
-            localStorage.setItem('g_costs', JSON.stringify(costs));
-            localStorage.setItem('g_last', Date.now());
+            localStorage.setItem('h_score', score);
+            localStorage.setItem('h_pps', pps);
+            localStorage.setItem('h_power', power);
+            localStorage.setItem('h_stars', stars);
+            localStorage.setItem('h_costs', JSON.stringify(costs));
         }
 
-        setInterval(() => {
-            score += pps;
-            updateUI();
-            save();
-        }, 1000);
-
+        setInterval(() => { score += pps; updateUI(); save(); }, 1000);
         updateUI();
     </script>
 </body>
