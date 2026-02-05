@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Hakos Star Premium</title>
+    <title>Hakos Pro Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -21,16 +21,16 @@
             background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
             color: white; margin: 0; height: 100vh;
             display: flex; flex-direction: column; align-items: center;
-            overflow: hidden; padding: env(safe-area-inset-top) 20px;
+            overflow: hidden; 
+            padding-top: 100px; /* Сдвинул весь интерфейс еще ниже */
         }
 
-        /* Стеклянный счет - Центрирован сверху */
-        .score-wrapper { margin-top: 60px; z-index: 5; }
         .score-card {
             background: var(--glass); backdrop-filter: blur(25px);
             border: 1px solid var(--glass-border);
-            padding: 15px 35px; border-radius: 24px;
+            padding: 20px 40px; border-radius: 24px;
             text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            z-index: 5;
         }
 
         #score {
@@ -39,60 +39,54 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        .stars-display { color: var(--gold); font-size: 14px; font-weight: bold; margin-top: 4px; }
+        .stats-row { font-size: 13px; color: #94a3b8; font-weight: bold; margin-top: 5px; letter-spacing: 1px; }
 
-        /* Кнопка Магазина - ОПУЩЕНА ниже счета */
-        .nav-bar { width: 100%; display: flex; justify-content: center; margin-top: 20px; z-index: 10; }
+        .nav-bar { width: 100%; display: flex; justify-content: center; margin-top: 25px; z-index: 10; }
         .menu-trigger {
             background: var(--glass); border: 1px solid var(--glass-border);
-            color: white; padding: 10px 24px; border-radius: 14px;
-            font-weight: 800; font-size: 14px; letter-spacing: 1px; backdrop-filter: blur(10px);
+            color: white; padding: 12px 30px; border-radius: 16px;
+            font-weight: 800; font-size: 14px; backdrop-filter: blur(10px);
         }
 
-        /* Игровая зона */
         .game-container { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
         
         #main-target {
-            width: 210px; height: 210px; border-radius: 50%;
+            width: 220px; height: 220px; border-radius: 50%;
             background: var(--premium); display: flex; justify-content: center; align-items: center;
             box-shadow: 0 0 40px rgba(168, 85, 247, 0.3);
-            transition: transform 0.05s; cursor: pointer; border: 3px solid rgba(255,255,255,0.2);
+            transition: transform 0.05s; cursor: pointer; border: 4px solid rgba(255,255,255,0.2);
         }
         #main-target.active-x3 { background: var(--gold); box-shadow: 0 0 60px var(--gold); }
         #main-target:active { transform: scale(0.9); }
         .star-icon { width: 100px; fill: white; filter: drop-shadow(0 0 10px white); }
 
-        /* Прогресс-бар */
         .combo-box { width: 70%; margin-top: 30px; text-align: center; }
         .bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 10px; }
         #bar-fill { width: 0%; height: 100%; background: var(--premium); transition: width 0.1s linear; }
         #bar-fill.cooldown { background: #475569 !important; }
 
-        /* Магазин */
         .side-panel {
             position: fixed; top: 0; right: -100%; width: 100%; height: 100%;
-            background: rgba(2, 6, 23, 0.98); backdrop-filter: blur(30px);
+            background: rgba(2, 6, 23, 0.98); backdrop-filter: blur(35px);
             z-index: 1000; transition: 0.3s ease-out; padding: 60px 25px;
         }
         .side-panel.open { right: 0; }
+        .shop-scroll { height: 70vh; overflow-y: auto; padding-right: 5px; }
         .item-row { background: var(--glass); padding: 16px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--glass-border); }
         .btn-buy { background: white; color: black; border: none; padding: 10px 18px; border-radius: 10px; font-weight: bold; }
-        
-        .promo-section { margin-top: 30px; border-top: 1px solid var(--glass-border); padding-top: 20px; }
+        .btn-buy:disabled { background: #334155; color: #64748b; }
     </style>
 </head>
 <body>
 
-    <div class="score-wrapper">
-        <div class="score-card">
-            <div style="font-size: 10px; color: #94a3b8; letter-spacing: 2px;">VAULT</div>
-            <h1 id="score">0</h1>
-            <div class="stars-display">✨ STARS: <span id="stars-count">0</span></div>
-        </div>
+    <div class="score-card">
+        <h1 id="score">0</h1>
+        <div class="stats-row">✨ ЗВЕЗДЫ: <span id="stars-count">0</span></div>
+        <div class="stats-row" id="pps-display" style="color: #a855f7;">ПРИБЫЛЬ: 0/СЕК</div>
     </div>
 
     <div class="nav-bar">
-        <button class="menu-trigger" onclick="setShop(true)">ОТКРЫТЬ МАГАЗИН</button>
+        <button class="menu-trigger" onclick="setShop(true)">МАГАЗИН И КОДЫ</button>
     </div>
 
     <div class="game-container">
@@ -101,7 +95,7 @@
         </div>
 
         <div class="combo-box">
-            <div id="status-label" style="font-size: 12px; font-weight: bold; color: #94a3b8;">TAP TO BOOST</div>
+            <div id="status-label" style="font-size: 11px; font-weight: bold; color: #94a3b8; letter-spacing: 1px;">ЖМИ ДЛЯ БУСТА</div>
             <div class="bar-bg">
                 <div id="bar-fill"></div>
             </div>
@@ -109,13 +103,10 @@
     </div>
 
     <div id="shop-ui" class="side-panel">
-        <div style="color: #a855f7; margin-bottom: 20px; cursor:pointer;" onclick="setShop(false)">← ВЕРНУТЬСЯ</div>
-        <h2>МАГАЗИН</h2>
-        <div id="items-list"></div>
-        
-        <div class="promo-section">
-            <button class="menu-trigger" style="width:100%" onclick="enterPromo()">ВВЕСТИ ПРОМОКОД</button>
-        </div>
+        <div style="color: #a855f7; margin-bottom: 20px; cursor:pointer; font-weight: bold;" onclick="setShop(false)">← НАЗАД</div>
+        <h2 style="margin-bottom: 20px;">УЛУЧШЕНИЯ</h2>
+        <div class="shop-scroll" id="items-list"></div>
+        <button class="menu-trigger" style="width:100%; margin-top: 20px;" onclick="enterPromo()">ВВЕСТИ ПРОМОКОД</button>
     </div>
 
     <script>
@@ -127,18 +118,22 @@
         let combo = 0;
         let isX3 = false;
         let isCooldown = false;
-        let comboDecay = null;
 
         const items = [
-            { id: 'i1', name: 'Мощный клик', cost: 150, type: 'p', val: 2 },
-            { id: 'i2', name: 'Авто-майнер', cost: 100, type: 's', val: 1 }
+            { id: 'i1', name: 'Сила клика +2', cost: 150, type: 'p', val: 2 },
+            { id: 'i2', name: 'Сила клика +10', cost: 1200, type: 'p', val: 10 },
+            { id: 's1', name: 'Прокси-узел', cost: 50, type: 's', val: 0.5 },
+            { id: 's2', name: 'Майнер v1', cost: 400, type: 's', val: 4 },
+            { id: 's3', name: 'Дата-центр', cost: 2000, type: 's', val: 25 },
+            { id: 's4', name: 'Квантовый ПК', cost: 10000, type: 's', val: 150 }
         ];
-        let currentCosts = JSON.parse(localStorage.getItem('h_costs')) || { i1: 150, i2: 100 };
+
+        let currentCosts = JSON.parse(localStorage.getItem('h_costs')) || {};
+        items.forEach(i => { if(!currentCosts[i.id]) currentCosts[i.id] = i.cost; });
 
         function doTap() {
-            if (isCooldown) {
-                score += power; // Обычный клик во время КД
-            } else {
+            if (isCooldown) { score += power; } 
+            else {
                 let m = isX3 ? 3 : 1;
                 score += (power * m);
                 if (!isX3) {
@@ -146,29 +141,25 @@
                     if (combo >= 100) startX3();
                 }
             }
-            
             if (Math.random() < 0.0009) {
                 stars++;
                 window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
             }
-            
             updateUI();
-            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
         }
 
         function startX3() {
-            isX3 = true;
-            combo = 100;
+            isX3 = true; combo = 100;
             setTimeout(() => {
-                isX3 = false;
-                combo = 0;
+                isX3 = false; combo = 0;
                 startCooldown();
-            }, 10000); // 10 секунд длится x3
+            }, 10000);
         }
 
         function startCooldown() {
             isCooldown = true;
-            let cdEnd = Date.now() + (30 * 60 * 1000); // 30 минут
+            let cdEnd = Date.now() + (30 * 60 * 1000);
             localStorage.setItem('cd_end', cdEnd);
             checkCooldown();
         }
@@ -178,7 +169,7 @@
             if (end && Date.now() < end) {
                 isCooldown = true;
                 let remaining = Math.ceil((end - Date.now()) / 1000 / 60);
-                document.getElementById('status-label').innerText = `КД: ${remaining} МИН`;
+                document.getElementById('status-label').innerText = `ПЕРЕЗАРЯДКА: ${remaining} МИН`;
                 document.getElementById('bar-fill').classList.add('cooldown');
                 document.getElementById('bar-fill').style.width = "100%";
                 setTimeout(checkCooldown, 30000);
@@ -190,22 +181,13 @@
             }
         }
 
-        function enterPromo() {
-            let p = prompt("CODE:");
-            if(p === 'hk' && !localStorage.getItem('p_hk')) {
-                score += 27;
-                localStorage.setItem('p_hk', '1');
-                alert("OK! +27");
-                updateUI();
-            }
-        }
-
         function updateUI() {
             document.getElementById('score').innerText = Math.floor(score);
             document.getElementById('stars-count').innerText = stars;
+            document.getElementById('pps-display').innerText = `ПРИБЫЛЬ: ${pps.toFixed(1)}/СЕК`;
             if (!isCooldown) {
                 document.getElementById('bar-fill').style.width = combo + "%";
-                document.getElementById('status-label').innerText = isX3 ? "🔥 РЕЖИМ X3 🔥" : "TAP FAST";
+                document.getElementById('status-label').innerText = isX3 ? "🔥 РЕЖИМ X3 (10 сек) 🔥" : "ЖМИ БЫСТРЕЕ!";
                 document.getElementById('main-target').className = isX3 ? "active-x3" : "";
             }
         }
@@ -216,8 +198,8 @@
                 let h = '';
                 items.forEach(i => {
                     h += `<div class="item-row">
-                        <div><b>${i.name}</b><br><small>${currentCosts[i.id]} PTS</small></div>
-                        <button class="btn-buy" onclick="buy('${i.id}')" ${score < currentCosts[i.id] ? 'disabled' : ''}>BUY</button>
+                        <div><b>${i.name}</b><br><small>+${i.val} ${i.type === 'p' ? 'к клику' : '/сек'}</small><br><b>${Math.floor(currentCosts[i.id])} PTS</b></div>
+                        <button class="btn-buy" onclick="buy('${i.id}')" ${score < currentCosts[i.id] ? 'disabled' : ''}>КУПИТЬ</button>
                     </div>`;
                 });
                 document.getElementById('items-list').innerHTML = h;
@@ -234,6 +216,14 @@
             }
         }
 
+        function enterPromo() {
+            let p = prompt("ВВЕДИТЕ КОД:");
+            if(p === 'hk' && !localStorage.getItem('p_hk')) {
+                score += 27; localStorage.setItem('p_hk', '1');
+                alert("УСПЕХ! +27"); updateUI();
+            }
+        }
+
         function save() {
             localStorage.setItem('h_score', score);
             localStorage.setItem('h_stars', stars);
@@ -242,7 +232,14 @@
             localStorage.setItem('h_costs', JSON.stringify(currentCosts));
         }
 
-        setInterval(() => { score += pps; updateUI(); save(); }, 1000);
+        setInterval(() => { 
+            if (pps > 0) { // Капает только если куплены майнеры
+                score += pps; 
+                updateUI(); 
+                save(); 
+            }
+        }, 1000);
+
         checkCooldown();
         updateUI();
     </script>
