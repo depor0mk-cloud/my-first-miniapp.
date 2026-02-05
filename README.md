@@ -1,1 +1,1 @@
-# my-first-miniapp.
+# my-first-miniapp
