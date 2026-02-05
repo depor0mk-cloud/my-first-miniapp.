@@ -2,22 +2,20 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hakos Clicker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hakos Clicker Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent-color: #38bdf8;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
+            --primary: #38bdf8;
+            --bg: #0f172a;
+            --card: #1e293b;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: white;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -25,236 +23,217 @@
             height: 100vh;
             overflow: hidden;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Шапка */
-        .header {
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-        }
-
-        .logo {
-            font-weight: 900;
-            font-size: 24px;
-            letter-spacing: -1px;
-            color: var(--accent-color);
-            font-style: italic;
-        }
-
-        /* Счетчик */
-        .score-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        #score {
-            font-size: 64px;
-            font-weight: 800;
-            text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
-        }
-
-        .cps {
-            color: var(--text-dim);
-            font-size: 16px;
-        }
-
-        /* Главная кнопка (Круг) */
-        .click-area {
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .circle-btn {
-            width: 250px;
-            height: 250px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #0ea5e9, #2563eb);
-            border: 10px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 50px rgba(37, 99, 235, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: transform 0.05s ease;
-            position: relative;
-        }
-
-        .circle-btn:active {
-            transform: scale(0.95);
-        }
-
-        .circle-btn svg {
-            width: 80px;
-            height: 80px;
-            color: white;
-        }
-
-        /* Нижняя панель */
-        .shop-panel {
-            width: 90%;
-            max-width: 400px;
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 24px 24px 0 0;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 0;
-        }
-
-        .upgrade-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 16px;
-            cursor: pointer;
-        }
-
-        .upgrade-info div:first-child { font-weight: bold; }
-        .upgrade-info div:last-child { color: var(--text-dim); font-size: 12px; }
-
-        .price {
-            color: var(--accent-color);
-            font-weight: 900;
-        }
-
-        /* Всплывающие цифры */
-        .floating-text {
+        /* Меню сверху справа */
+        .header-menu {
             position: absolute;
-            color: white;
-            font-weight: bold;
-            pointer-events: none;
-            animation: floatUp 0.8s ease-out forwards;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
         }
 
-        @keyframes floatUp {
-            0% { transform: translateY(0); opacity: 1; }
-            100% { transform: translateY(-100px); opacity: 0; }
+        .menu-btn {
+            background: var(--card);
+            border: 2px solid var(--primary);
+            color: white;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Контейнер очков */
+        #score-container { margin-top: 80px; text-align: center; }
+        #score { font-size: 56px; font-weight: 900; color: var(--primary); text-shadow: 0 0 20px rgba(56,189,248,0.3); }
+        #pps { color: #94a3b8; font-size: 18px; margin-top: 5px; }
+
+        /* Главная кнопка с буквой H */
+        #click-btn {
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle, #0ea5e9 0%, #0284c7 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 40px;
+            cursor: pointer;
+            box-shadow: 0 0 50px rgba(2, 132, 199, 0.5);
+            transition: transform 0.05s;
+            border: 10px solid rgba(255,255,255,0.05);
+        }
+
+        #click-btn:active { transform: scale(0.95); }
+
+        .h-logo {
+            font-size: 120px;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            color: white;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+        }
+
+        /* Магазин (боковое меню) */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            height: 100%;
+            background: var(--card);
+            transition: 0.3s;
+            z-index: 200;
+            padding: 20px;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        .side-menu.active { right: 0; }
+
+        .close-btn { color: var(--primary); font-weight: bold; margin-bottom: 20px; display: block; }
+
+        .item {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #334155;
+        }
+
+        .buy-btn {
+            width: 100%;
+            background: var(--primary);
+            color: #0f172a;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .buy-btn:disabled { background: #475569; }
+
+        /* Таблица лидеров (заглушка) */
+        #leaderboard-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 300;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="logo">HAKOS</div>
-        <div id="username" style="font-size: 14px; opacity: 0.7;">Загрузка...</div>
+    <div class="header-menu">
+        <button class="menu-btn" onclick="toggleShop(true)">МАГАЗИН</button>
+        <button class="menu-btn" onclick="toggleLeaderboard(true)">🏆</button>
     </div>
 
-    <div class="score-container">
+    <div id="score-container">
         <div id="score">0</div>
-        <div class="cps">добыча: <span id="cps-val">0</span>/сек</div>
+        <div id="pps">Добыча: 0/сек</div>
     </div>
 
-    <div class="click-area">
-        <div class="circle-btn" id="main-click">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-2 2-10-10 10-10 2 2M15 6l5 5-5 5"/></svg>
+    <div id="click-btn" onclick="handleClick()">
+        <span class="h-logo">H</span>
+    </div>
+
+    <div id="shop" class="side-menu">
+        <span class="close-btn" onclick="toggleShop(false)">← НАЗАД</span>
+        <h2>Улучшения</h2>
+        <div class="item">
+            <b>🤖 Видеокарта (+1/сек)</b>
+            <div id="cost1">Цена: 50</div>
+            <button class="buy-btn" id="btn1" onclick="buyItem(1)">Купить</button>
+        </div>
+        <div class="item">
+            <b>🏢 Дата-центр (+10/сек)</b>
+            <div id="cost2">Цена: 500</div>
+            <button class="buy-btn" id="btn2" onclick="buyItem(2)">Купить</button>
         </div>
     </div>
 
-    <div class="shop-panel">
-        <div class="upgrade-card" id="buy-factory">
-            <div class="upgrade-info">
-                <div>🛒 Купить Завод</div>
-                <div id="factory-count">Уровень: 0</div>
-            </div>
-            <div class="price" id="factory-price">50</div>
+    <div id="leaderboard-overlay">
+        <h2>Таблица лидеров</h2>
+        <div style="background: var(--card); padding: 20px; border-radius: 15px; width: 80%;">
+            <p>1. Ты (Легенда) — <span id="user-top-score">0</span></p>
+            <p style="color: #64748b;">Здесь скоро появятся твои друзья...</p>
         </div>
+        <button class="menu-btn" style="margin-top: 20px;" onclick="toggleLeaderboard(false)">ЗАКРЫТЬ</button>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+        let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Переменные игры
-        let score = 0;
-        let factories = 0;
-        let factoryPrice = 50;
+        let score = parseFloat(localStorage.getItem('score')) || 0;
+        let pps = parseFloat(localStorage.getItem('pps')) || 0;
+        let item1Cost = parseInt(localStorage.getItem('item1Cost')) || 50;
+        let item2Cost = parseInt(localStorage.getItem('item2Cost')) || 500;
+        let lastExit = parseInt(localStorage.getItem('lastExit')) || Date.now();
 
-        // Элементы
-        const scoreEl = document.getElementById('score');
-        const cpsEl = document.getElementById('cps-val');
-        const factoryCountEl = document.getElementById('factory-count');
-        const factoryPriceEl = document.getElementById('factory-price');
-        const mainBtn = document.getElementById('main-click');
-
-        // Показать имя
-        if (tg.initDataUnsafe?.user) {
-            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name;
-        }
-
-        // Облачное сохранение (Telegram Cloud Storage)
-        function saveProgress() {
-            const data = JSON.stringify({ score, factories, factoryPrice });
-            tg.CloudStorage.setItem('save_game', data);
-        }
-
-        // Загрузка прогресса
-        tg.CloudStorage.getItem('save_game', (err, value) => {
-            if (!err && value) {
-                const saved = JSON.parse(value);
-                score = saved.score || 0;
-                factories = saved.factories || 0;
-                factoryPrice = saved.factoryPrice || 50;
-                updateUI();
+        // Логика оффлайна (3 часа = 10800 секунд)
+        function checkOffline() {
+            let now = Date.now();
+            let diff = Math.floor((now - lastExit) / 1000); // секунд прошло
+            if (diff > 0 && pps > 0) {
+                let offlineTime = Math.min(diff, 10800); // не больше 3 часов
+                let reward = offlineTime * pps;
+                score += reward;
+                alert(`Вас не было ${Math.floor(offlineTime/60)} мин. Заводы принесли: ${reward} очков!`);
             }
-        });
+        }
+
+        function toggleShop(show) {
+            document.getElementById('shop').classList.toggle('active', show);
+        }
+
+        function toggleLeaderboard(show) {
+            document.getElementById('leaderboard-overlay').style.display = show ? 'flex' : 'none';
+            document.getElementById('user-top-score').innerText = Math.floor(score);
+        }
 
         function updateUI() {
-            scoreEl.innerText = Math.floor(score).toLocaleString();
-            cpsEl.innerText = (factories * 2);
-            factoryCountEl.innerText = `Уровень: ${factories}`;
-            factoryPriceEl.innerText = Math.floor(factoryPrice);
+            document.getElementById('score').innerText = Math.floor(score);
+            document.getElementById('pps').innerText = `Добыча: ${pps}/сек`;
+            document.getElementById('cost1').innerText = `Цена: ${item1Cost}`;
+            document.getElementById('cost2').innerText = `Цена: ${item2Cost}`;
+            document.getElementById('btn1').disabled = score < item1Cost;
+            document.getElementById('btn2').disabled = score < item2Cost;
         }
 
-        // Клик
-        mainBtn.addEventListener('click', (e) => {
+        function handleClick() {
             score += 1;
             updateUI();
-            createFloatingText(e.clientX, e.clientY, "+1");
-            saveProgress();
-        });
+        }
 
-        // Покупка завода
-        document.getElementById('buy-factory').addEventListener('click', () => {
-            if (score >= factoryPrice) {
-                score -= factoryPrice;
-                factories += 1;
-                factoryPrice *= 1.65; // Инфляция
-                updateUI();
-                saveProgress();
-            } else {
-                tg.HapticFeedback.notificationOccurred('error');
+        function buyItem(id) {
+            if (id === 1 && score >= item1Cost) {
+                score -= item1Cost; pps += 1;
+                item1Cost = Math.floor(item1Cost * 1.5);
+            } else if (id === 2 && score >= item2Cost) {
+                score -= item2Cost; pps += 10;
+                item2Cost = Math.floor(item2Cost * 1.6);
             }
-        });
+            updateUI();
+        }
 
-        // Авто-клик (каждую секунду)
         setInterval(() => {
-            if (factories > 0) {
-                score += (factories * 2);
-                updateUI();
-            }
+            score += pps;
+            updateUI();
+            localStorage.setItem('score', score);
+            localStorage.setItem('pps', pps);
+            localStorage.setItem('item1Cost', item1Cost);
+            localStorage.setItem('item2Cost', item2Cost);
+            localStorage.setItem('lastExit', Date.now());
         }, 1000);
 
-        // Периодическое авто-сохранение (каждые 10 сек)
-        setInterval(saveProgress, 10000);
-
-        function createFloatingText(x, y, text) {
-            const el = document.createElement('div');
-            el.className = 'floating-text';
-            el.innerText = text;
-            el.style.left = `${x}px`;
-            el.style.top = `${y}px`;
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 800);
-        }
+        checkOffline();
+        updateUI();
     </script>
 </body>
 </html>
