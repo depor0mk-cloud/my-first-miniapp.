@@ -2,186 +2,112 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>ZOMBIE OVERDRIVE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Frontline: Scorched Earth</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --main: #00ff88; --dmg: #ff4444; --rage: #ffcc00; }
-        body { background: #050505; color: #eee; font-family: 'Arial Black', sans-serif; text-align: center; margin: 0; overflow-x: hidden; }
-        
-        .game-window { background: #111; border: 4px solid #333; border-radius: 25px; width: 360px; margin: 10px auto; padding: 15px; box-shadow: 0 0 40px rgba(0,255,136,0.15); border-top: 6px solid var(--main); }
-        
-        /* Шкала Ярости */
-        .rage-container { width: 100%; height: 8px; background: #222; border-radius: 4px; margin-bottom: 10px; border: 1px solid #444; }
-        #rage-fill { height: 100%; width: 0%; background: var(--rage); box-shadow: 0 0 10px var(--rage); transition: 0.1s; }
-
-        .zombie-box { background: radial-gradient(circle, #222 0%, #000 100%); border-radius: 20px; padding: 15px; border: 2px solid #444; position: relative; }
-        .zombie-icon { font-size: 90px; height: 110px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 10px rgba(255,0,0,0.5)); }
-        
-        .bar { width: 100%; height: 16px; background: #222; border-radius: 8px; overflow: hidden; border: 1px solid #000; margin-top: 10px; }
-        .fill-red { height: 100%; background: linear-gradient(90deg, #ff0000, #550000); width: 100%; }
-        .fill-blue { height: 100%; background: linear-gradient(90deg, #00d2ff, #3a7bd5); width: 100%; }
-
-        .hit-btn { 
-            background: linear-gradient(#444, #111); color: var(--main); border: 2px solid var(--main); padding: 18px; width: 100%; 
-            font-size: 26px; font-weight: bold; border-radius: 15px; cursor: pointer; margin-top: 15px;
-            transition: 0.1s; text-shadow: 0 0 10px var(--main);
-        }
-        .hit-btn:active { transform: scale(0.96); background: var(--main); color: #000; }
-        .hit-btn.rage-active { animation: glow 0.5s infinite alternate; border-color: var(--rage); color: var(--rage); }
-
-        @keyframes glow { from { box-shadow: 0 0 5px var(--rage); } to { box-shadow: 0 0 20px var(--rage); } }
-
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; }
-        .stat-item { background: #1a1a1a; padding: 10px; border-radius: 12px; border-bottom: 3px solid #333; }
-        .stat-item b { color: var(--main); font-size: 18px; display: block; }
-
-        .shop { background: #1a1a1a; padding: 10px; border-radius: 15px; border: 1px solid #333; text-align: left; }
-        .shop-btn { 
-            width: 100%; padding: 12px; margin: 6px 0; cursor: pointer; 
-            background: #252525; color: #fff; border: 1px solid #444; border-radius: 10px;
-            display: flex; justify-content: space-between; font-size: 14px; transition: 0.2s;
-        }
-        .shop-btn:hover:not(:disabled) { border-color: var(--main); background: #333; }
-        .shop-btn:disabled { opacity: 0.2; transform: scale(0.98); }
+        body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; overflow: hidden; touch-action: manipulation; }
+        canvas { display: block; background: #222; margin: 0 auto; border-bottom: 5px solid #444; }
+        .ui { padding: 10px; text-align: center; }
+        button { padding: 15px 30px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        button:active { background: #0056b3; }
+        .stats { display: flex; justify-content: space-around; font-size: 14px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="game-window">
-    <div id="loc-name" style="color: #888; font-size: 12px;">ЛОКАЦИЯ: ПОДВОРОТНЯ</div>
-    <div class="rage-container"><div id="rage-fill"></div></div>
-    
-    <div class="zombie-box">
-        <div id="z-name" style="color: var(--dmg); font-size: 16px;">Гнилой зомби</div>
-        <div id="z-icon" class="zombie-icon">🧟</div>
-        <div class="bar"><div id="z-hp" class="fill-red"></div></div>
+    <div class="ui">
+        <div class="stats">
+            <div>Лом: <span id="scrap">0</span></div>
+            <div>Фронт: <span id="frontPos">50%</span></div>
+        </div>
+        <button onclick="spawnUnit()">Выслать отряд (10 лома)</button>
     </div>
-
-    <button id="hit-main" class="hit-btn" onmousedown="hit()">ГАСИ ИХ!</button>
-
-    <div class="stats">
-        <div class="stat-item">🍾 Бутылки <b id="m-money">0</b></div>
-        <div class="stat-item">💪 Урон <b id="m-dmg">2</b></div>
-        <div class="stat-item">⚡ Уровень <b id="m-lvl">1</b></div>
-        <div class="stat-item">❤️ Здоровье <div class="bar" style="height:6px; margin-top:4px;"><div id="p-hp" class="fill-blue"></div></div></div>
-    </div>
-
-    <div class="shop">
-        <button id="s-wep" class="shop-btn" onclick="buy('wep')"><span>⛏️ Арматура (+12)</span> <b id="c-wep">30</b></button>
-        <button id="s-auto" class="shop-btn" onclick="buy('auto')"><span>🐶 Зомби-пес (Авто)</span> <b id="c-auto">100</b></button>
-        <button id="s-cola" class="shop-btn" onclick="buy('cola')"><span>☢️ Яд-Кола (x2 УРОН)</span> <b>500</b></button>
-        <button id="s-prestige" class="shop-btn" onclick="prestige()" style="display:none; background: var(--rage); color: #000;">ПЕРЕРОЖДЕНИЕ</button>
-    </div>
-</div>
+    <canvas id="gameCanvas"></canvas>
 
 <script>
-    let state = JSON.parse(localStorage.getItem('zombie_v4_save')) || {
-        money: 0, dmg: 4, mult: 1, auto: 0, lvl: 1, cWep: 30, cAuto: 100, cola: 1
-    };
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Расширяем приложение на весь экран
 
-    let pHP = 100, zHP = 20, zMax = 20, zDmg = 1, rage = 0, isRage = false;
-    const icons = ["🧟","🧛","💀","👾","👹","🐉","🦍","🧟‍♂️","🎃","🕷️","👹"];
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight * 0.6;
 
-    // Атака зомби
+    let scrap = 50;
+    let frontline = canvas.width / 2; // Начальная позиция фронта (центр)
+    let units = [];
+
+    // Класс юнита
+    class Unit {
+        constructor(side) {
+            this.side = side; // 'player' или 'enemy'
+            this.x = side === 'player' ? 0 : canvas.width;
+            this.y = canvas.height / 2 + (Math.random() * 40 - 20);
+            this.speed = side === 'player' ? 2 : -2;
+            this.hp = 10;
+        }
+
+        draw() {
+            ctx.fillStyle = this.side === 'player' ? '#00d4ff' : '#ff4d4d';
+            ctx.fillRect(this.x, this.y, 10, 10);
+        }
+
+        update() {
+            this.x += this.speed;
+        }
+    }
+
+    function spawnUnit() {
+        if (scrap >= 10) {
+            scrap -= 10;
+            units.push(new Unit('player'));
+            document.getElementById('scrap').innerText = scrap;
+        }
+    }
+
+    // Враг спавнит юнитов автоматически (простой ИИ)
     setInterval(() => {
-        pHP -= zDmg;
-        if (pHP < 30 && state.money >= 15) { pHP = Math.min(100, pHP + 40); state.money -= 15; }
-        if (pHP <= 0) { state.money *= 0.5; pHP = 100; alert("Тебя съели! Потеряно 50% денег."); }
-        ui();
-    }, 1200);
+        units.push(new Unit('enemy'));
+    }, 3000);
 
-    // Авто-битва
-    setInterval(() => { if (state.auto > 0) damage(state.auto * state.mult * state.cola); }, 1000);
+    // Логика игры (обновление кадров)
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    function hit() {
-        let currentDmg = state.dmg * state.mult * state.cola;
-        if (isRage) currentDmg *= 5; // Урон в ярости x5
-        
-        damage(currentDmg);
-        
-        // Копим ярость
-        if (!isRage) {
-            rage += 2;
-            if (rage >= 100) startRage();
-        }
+        // Рисуем Линию Фронта
+        ctx.strokeStyle = 'yellow';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(frontline, 0);
+        ctx.lineTo(frontline, canvas.height);
+        ctx.stroke();
 
-        let s = document.getElementById('z-icon');
-        s.style.transform = "scale(0.8) translateY(10px)";
-        setTimeout(() => s.style.transform = "scale(1)", 30);
-    }
+        // Обновляем юнитов
+        units.forEach((unit, index) => {
+            unit.update();
+            unit.draw();
 
-    function startRage() {
-        isRage = true;
-        document.getElementById('hit-main').classList.add('rage-active');
-        let timer = setInterval(() => {
-            rage -= 5;
-            if (rage <= 0) {
-                rage = 0; isRage = false;
-                document.getElementById('hit-main').classList.remove('rage-active');
-                clearInterval(timer);
+            // Если юнит дошел до линии фронта, он "давит" её
+            if (unit.side === 'player' && unit.x >= frontline) {
+                frontline += 2; 
+                units.splice(index, 1);
+            } else if (unit.side === 'enemy' && unit.x <= frontline) {
+                frontline -= 2;
+                units.splice(index, 1);
             }
-            ui();
-        }, 100);
+        });
+
+        // Пассивный доход лома от контроля территории
+        scrap += (frontline / canvas.width) * 0.05;
+        document.getElementById('scrap').innerText = Math.floor(scrap);
+        document.getElementById('frontPos').innerText = Math.floor((frontline / canvas.width) * 100) + "%";
+
+        requestAnimationFrame(gameLoop);
     }
 
-    function damage(val) {
-        zHP -= val;
-        if (zHP <= 0) {
-            state.money += Math.ceil(state.lvl * 10 * state.mult);
-            state.lvl++;
-            newZombie();
-        }
-        ui();
-    }
-
-    function newZombie() {
-        zMax = Math.floor(20 * Math.pow(1.15, state.lvl));
-        zHP = zMax;
-        zDmg = Math.max(1, Math.floor(1 * Math.pow(1.08, state.lvl)));
-        
-        document.getElementById('z-icon').innerText = icons[state.lvl % icons.length];
-        document.getElementById('z-name').innerText = "Мутант Ур. " + state.lvl;
-        
-        // Смена локаций
-        if (state.lvl > 60) document.getElementById('loc-name').innerText = "ЛОКАЦИЯ: ЦЕНТР АДА";
-        else if (state.lvl > 40) document.getElementById('loc-name').innerText = "ЛОКАЦИЯ: ЛАБОРАТОРИЯ";
-        else if (state.lvl > 20) document.getElementById('loc-name').innerText = "ЛОКАЦИЯ: ЗАБРОШКА";
-    }
-
-    function buy(t) {
-        if (t=='wep' && state.money >= state.cWep) {
-            state.money -= state.cWep; state.dmg += 12; state.cWep = Math.round(state.cWep * 1.4);
-        }
-        if (t=='auto' && state.money >= state.cAuto) {
-            state.money -= state.cAuto; state.auto += 5; state.cAuto = Math.round(state.cAuto * 1.6);
-        }
-        if (t=='cola' && state.money >= 500) {
-            state.money -= 500; state.cola += 1;
-        }
-        ui();
-    }
-
-    function prestige() {
-        state.mult += 2; state.money = 0; state.dmg = 4; state.auto = 0; state.lvl = 1; state.cola = 1;
-        state.cWep = 30; state.cAuto = 100; pHP = 100; newZombie(); ui();
-    }
-
-    function ui() {
-        document.getElementById('m-money').innerText = Math.floor(state.money);
-        document.getElementById('m-dmg').innerText = state.dmg * state.mult * state.cola * (isRage ? 5 : 1);
-        document.getElementById('m-lvl').innerText = state.lvl;
-        document.getElementById('z-hp').style.width = (zHP/zMax*100) + "%";
-        document.getElementById('p-hp').style.width = pHP + "%";
-        document.getElementById('rage-fill').style.width = rage + "%";
-        document.getElementById('c-wep').innerText = state.cWep;
-        document.getElementById('c-auto').innerText = state.cAuto;
-        document.getElementById('s-wep').disabled = state.money < state.cWep;
-        document.getElementById('s-auto').disabled = state.money < state.cAuto;
-        document.getElementById('s-cola').disabled = state.money < 500;
-        document.getElementById('s-prestige').style.display = state.money >= 1000 ? "flex" : "none";
-        localStorage.setItem('zombie_v4_save', JSON.stringify(state));
-    }
-
-    newZombie(); ui();
+    gameLoop();
 </script>
 </body>
 </html>
