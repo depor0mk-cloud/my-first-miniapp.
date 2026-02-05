@@ -1,0 +1,272 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection, 
+  query, 
+  onSnapshot, 
+  signInAnonymously, 
+  getAuth,
+  signInWithCustomToken,
+  onAuthStateChanged
+} from 'firebase/firestore';
+import { Trophy, ShoppingBag, MousePointer2, Factory, ArrowUpCircle, X } from 'lucide-react';
+
+// --- Конфигурация Firebase ---
+const firebaseConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'hakos-clicker-unique-id';
+
+const App = () => {
+  const [user, setUser] = useState(null);
+  const [score, setScore] = useState(0);
+  const [multiplier, setMultiplier] = useState(1);
+  const [autoClickRate, setAutoClickRate] = useState(0);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  
+  // Экономика: Базовая цена и коэффициенты инфляции
+  const [factoryCount, setFactoryCount] = useState(0);
+  const factoryBasePrice = 50;
+  const inflationRate = 1.65; // Цена растет на 65% за каждый уровень
+  const currentFactoryPrice = Math.floor(factoryBasePrice * Math.pow(inflationRate, factoryCount));
+
+  // Инициализация Auth
+  useEffect(() => {
+    const initAuth = async () => {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) setUser(u);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Загрузка данных пользователя
+  useEffect(() => {
+    if (!user) return;
+
+    const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'stats');
+    getDoc(userDocRef).then((snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setScore(data.score || 0);
+        setFactoryCount(data.factoryCount || 0);
+        setAutoClickRate((data.factoryCount || 0) * 2);
+      }
+    });
+
+    // Подписка на глобальный лидерборд
+    const q = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const players = [];
+      snapshot.forEach((doc) => players.push({ id: doc.id, ...doc.data() }));
+      // Сортировка по очкам (т.к. нельзя в query без индекса)
+      setLeaderboard(players.sort((a, b) => b.score - a.score).slice(0, 10));
+    }, (err) => console.error("Leaderboard error:", err));
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Авто-клик логика
+  useEffect(() => {
+    if (autoClickRate <= 0) return;
+    const interval = setInterval(() => {
+      setScore(prev => prev + autoClickRate);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [autoClickRate]);
+
+  // Сохранение в БД (debounce для производительности)
+  useEffect(() => {
+    if (!user) return;
+    const timeout = setTimeout(() => {
+      const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'stats');
+      setDoc(userDocRef, { score, factoryCount, lastUpdate: Date.now() }, { merge: true });
+
+      // Обновление в публичном лидерборде
+      const leaderRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid);
+      setDoc(leaderRef, { score, name: `Игрок ${user.uid.slice(0, 4)}`, lastUpdate: Date.now() }, { merge: true });
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [score, factoryCount, user]);
+
+  const handleManualClick = () => {
+    setScore(prev => prev + multiplier);
+  };
+
+  const buyFactory = () => {
+    if (score >= currentFactoryPrice) {
+      setScore(prev => prev - currentFactoryPrice);
+      const newCount = factoryCount + 1;
+      setFactoryCount(newCount);
+      setAutoClickRate(newCount * 2); // 1 завод = 2 очка в сек
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-neutral-950 text-white font-sans overflow-hidden flex flex-col items-center p-4 select-none"
+         style={{
+           backgroundImage: 'radial-gradient(circle at center, #1a1a2e 0%, #0a0a0a 100%)'
+         }}>
+      
+      {/* Шапка */}
+      <div className="w-full max-w-md flex justify-between items-center mt-4">
+        <h1 className="text-3xl font-black tracking-tighter text-blue-500 italic">HAKOS</h1>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setShowLeaderboard(true)}
+            className="p-2 bg-neutral-800 rounded-full hover:bg-neutral-700 transition"
+          >
+            <Trophy size={20} className="text-yellow-500" />
+          </button>
+          <button 
+            onClick={() => setShowShop(true)}
+            className="p-2 bg-neutral-800 rounded-full hover:bg-neutral-700 transition"
+          >
+            <ShoppingBag size={20} className="text-blue-400" />
+          </button>
+        </div>
+      </div>
+
+      {/* Основной счет */}
+      <div className="flex flex-col items-center mt-12 mb-8">
+        <span className="text-6xl font-bold tabular-nums drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+          {score.toLocaleString()}
+        </span>
+        <span className="text-neutral-400 text-sm mt-2 flex items-center gap-1">
+          <ArrowUpCircle size={14} /> +{autoClickRate}/сек
+        </span>
+      </div>
+
+      {/* Кнопка клика */}
+      <div className="flex-1 flex items-center justify-center w-full">
+        <button
+          onClick={handleManualClick}
+          className="relative group active:scale-95 transition-transform duration-75 outline-none"
+        >
+          <div className="absolute inset-0 bg-blue-600 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+          <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-gradient-to-tr from-blue-700 to-blue-400 flex items-center justify-center border-8 border-white/10 shadow-2xl overflow-hidden">
+            <MousePointer2 size={64} className="text-white drop-shadow-lg" />
+            <div className="absolute inset-0 bg-white/5 group-hover:bg-white/10"></div>
+          </div>
+        </button>
+      </div>
+
+      {/* Нижняя панель статистики */}
+      <div className="w-full max-w-md bg-neutral-900/50 backdrop-blur-md border border-white/5 rounded-2xl p-4 mb-8 grid grid-cols-2 gap-4">
+        <div className="flex flex-col">
+          <span className="text-xs text-neutral-500 uppercase font-bold">Заводы</span>
+          <span className="text-lg font-semibold flex items-center gap-2">
+            <Factory size={18} className="text-purple-400" /> {factoryCount}
+          </span>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-xs text-neutral-500 uppercase font-bold">Твой ID</span>
+          <span className="text-sm font-mono opacity-50">{user?.uid.slice(0, 10)}...</span>
+        </div>
+      </div>
+
+      {/* Модальное окно: Магазин */}
+      {showShop && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowShop(false)}></div>
+          <div className="relative w-full max-w-md bg-neutral-900 rounded-t-[2rem] sm:rounded-2xl p-6 border-t border-white/10 sm:border border-white/5 shadow-2xl slide-in-from-bottom">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <ShoppingBag className="text-blue-400" /> Магазин
+              </h2>
+              <button onClick={() => setShowShop(false)} className="p-2 hover:bg-white/5 rounded-full"><X size={20}/></button>
+            </div>
+
+            <div 
+              onClick={buyFactory}
+              className={`group flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
+                score >= currentFactoryPrice 
+                ? 'bg-neutral-800/50 border-blue-500/30 hover:border-blue-500 active:scale-95' 
+                : 'bg-neutral-900 opacity-50 border-white/5'
+              }`}
+            >
+              <div className="w-14 h-14 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                <Factory className="text-blue-400" size={28} />
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-lg">HAKOS Завод</div>
+                <div className="text-sm text-neutral-400">+2 очка/сек</div>
+              </div>
+              <div className="text-right">
+                <div className={`font-bold ${score >= currentFactoryPrice ? 'text-green-400' : 'text-red-400'}`}>
+                  {currentFactoryPrice.toLocaleString()}
+                </div>
+                <div className="text-[10px] text-neutral-500 uppercase tracking-widest">Очков</div>
+              </div>
+            </div>
+
+            <div className="mt-6 text-xs text-center text-neutral-500">
+              Цена увеличивается на x{inflationRate} за каждую покупку. Инфляция реальна!
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно: Лидерборд */}
+      {showLeaderboard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowLeaderboard(false)}></div>
+          <div className="relative w-full max-w-md bg-neutral-900 rounded-2xl p-6 border border-white/10 shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Trophy className="text-yellow-500" /> Топ-10 Мира
+              </h2>
+              <button onClick={() => setShowLeaderboard(false)} className="p-2 hover:bg-white/5 rounded-full"><X size={20}/></button>
+            </div>
+            
+            <div className="overflow-y-auto space-y-2 pr-2">
+              {leaderboard.length === 0 ? (
+                <div className="text-center text-neutral-500 py-10 italic">Список пуст... Стань первым!</div>
+              ) : (
+                leaderboard.map((player, index) => (
+                  <div 
+                    key={player.id} 
+                    className={`flex items-center gap-4 p-3 rounded-xl border ${
+                      player.id === user?.uid 
+                      ? 'bg-blue-500/10 border-blue-500/50' 
+                      : 'bg-neutral-800/30 border-white/5'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 flex items-center justify-center rounded-full font-black text-sm ${
+                      index === 0 ? 'bg-yellow-500 text-black' : 
+                      index === 1 ? 'bg-slate-300 text-black' :
+                      index === 2 ? 'bg-amber-600 text-black' : 'bg-neutral-800 text-white'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 font-medium text-sm truncate">
+                      {player.name} {player.id === user?.uid && "(Ты)"}
+                    </div>
+                    <div className="font-bold text-blue-400">
+                      {player.score.toLocaleString()}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default App;
