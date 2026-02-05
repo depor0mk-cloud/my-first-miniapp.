@@ -6,62 +6,7 @@
     <title>HKos Hardcore Beta</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card-bg: #0a0a0a; --neon: #00ff88; --shadow: 0 0 15px rgba(0,255,136,0.5); }
-        * { -webkit-tap-highlight-color: transparent; user-select: none; box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; background: var(--bg); color: #fff; font-family: 'Arial Black', sans-serif; height: 100vh; overflow: hidden; }
-        canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.15; }
-        .app-wrapper { display: flex; flex-direction: column; height: 100vh; padding: 15px 20px 90px; }
-        .card { background: var(--card-bg); border-radius: 35px; padding: 30px 20px; text-align: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; }
-        .hkos-val { font-size: 42px; font-weight: 900; color: var(--neon); text-shadow: var(--shadow); font-family: monospace; }
-        .btn-3d { background: var(--neon); color: #000; border: none; padding: 15px; border-radius: 15px; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #008844; cursor: pointer; width: 100%; }
-        .btn-3d:active { transform: translateY(2px); box-shadow: 0 2px 0 #008844; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 20000; display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
-        .modal-content { background: #0f0f0f; border: 3px solid var(--neon); border-radius: 40px; padding: 40px 25px; text-align: center; width: 85%; transform: scale(0.8); transition: 0.3s; box-shadow: var(--shadow); }
-        .modal-overlay.show { opacity: 1; display: flex; }
-        .modal-overlay.show .modal-content { transform: scale(1); }
-        .progress-box { width: 100%; background: #111; height: 15px; border-radius: 10px; margin: 20px 0; overflow: hidden; }
-        .bar { width: 0%; height: 100%; background: var(--neon); box-shadow: var(--shadow); transition: 0.1s; }
-        .nav { position: fixed; bottom: 30px; left: 20px; right: 20px; display: flex; justify-content: space-around; padding: 18px; background: rgba(10,10,10,0.95); backdrop-filter: blur(15px); border-radius: 25px; border: 1px solid rgba(255,255,255,0.08); }
-        .nav-item { font-size: 11px; font-weight: 900; color: #444; text-transform: uppercase; border: none; background: none; }
-        .nav-item.active { color: var(--neon); text-shadow: var(--shadow); }
-        .screen { display: none; flex-direction: column; height: 100%; }
-        .screen.active { display: flex; }
-        input { background: transparent; border: none; color: var(--neon); text-align: center; width: 100%; outline: none; font-weight: 900; font-size: 18px; text-shadow: var(--shadow); padding: 5px; }
-        #ban-screen { position: fixed; inset: 0; background: #000; z-index: 30000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    </style>
-</head>
-<body>
-<canvas id="matrix"></canvas>
-
-<div id="m-reward" class="modal-overlay">
-    <div class="modal-content">
-        <div style="font-size: 60px;">💎</div>
-        <h2 style="font-weight: 900;">УСПЕХ!</h2>
-        <div id="reward-amt" style="font-size: 28px; color: var(--neon); font-weight: 900; margin: 20px 0;">+0.0000 HKos</div>
-        <button class="btn-3d" onclick="closeM('m-reward')">ЗАБРАТЬ</button>
-    </div>
-</div>
-
-<div id="m-promo" class="modal-overlay">
-    <div class="modal-content">
-        <div style="font-size: 60px;">🔑</div>
-        <h2 style="font-weight: 900;">АКТИВАЦИЯ</h2>
-        <div id="promo-val-text" style="font-size: 28px; color: var(--neon); font-weight: 900; margin: 20px 0;">+0.0000 HKos</div>
-        <button class="btn-3d" onclick="closeM('m-promo')">ОТЛИЧНО</button>
-    </div>
-</div>
-
-<div id="ban-screen">
-    <h1 style="color: #ff3e3e; font-weight: 900;">SYSTEM BLOCKED</h1>
-    <p style="color: #555;">SECURITY ALERT: HIGH CPS</p>
-    <input type="text" id="adm-unlock" placeholder="CODE" oninput="checkAdm()" style="margin-top: 30px;">
-</div>
-
-<div class="app-wrapper">
-    <div id="home-screen" class="screen active">
-        <div class="card">
-            <div style="font-size: 10px; color: #444; font-weight: 900;">БАЛАНС HKos</div>
-            <div id="hk-num" class="hkos-val">0.00000000</div>
+        :root { --bg: #            <div id="hk-num" class="hkos-val">0.00000000</div>
             <div id="ps-num" style="font-size: 13px; color: #555;">0.00000 HK/s</div>
         </div>
 
