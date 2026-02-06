@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>HKos Pro v26.6</title>
+    <title>HKos Pro v26.7</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: #000; --neon: #00ff88; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255, 255, 255, 0.1); }
@@ -27,8 +27,11 @@
             padding: 20px; text-align: center; margin-bottom: 12px;
         }
 
-        .user-nick { font-size: 10px; color: var(--neon); font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; }
-        .hk-val { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .user-nick { font-size: 10px; color: var(--neon); font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; opacity: 0.8; }
+        .hk-val { 
+            font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; 
+            text-shadow: 0 0 15px rgba(0, 255, 136, 0.3); /* Мягкое свечение */
+        }
         
         .btn-buy { 
             background: var(--neon); color: #000; border: none; 
@@ -70,9 +73,9 @@
 <div class="app">
     <div id="home-screen" class="screen active">
         <div class="card" style="margin-top:20px">
-            <div id="user-display" class="user-nick">ЗАГРУЗКА...</div>
+            <div id="user-display" class="user-nick">ПОДКЛЮЧЕНИЕ...</div>
             <div id="hk-num" class="hk-val">0.00000000</div>
-            <div id="ps-num" style="color:var(--neon); font-size:12px; font-weight:700">0.00000 HK/s</div>
+            <div id="ps-num" style="color:var(--neon); font-size:12px; font-weight:700; opacity: 0.9;">0.00000 HK/s</div>
         </div>
         <div class="card" style="padding:10px"><input type="text" id="p-input" oninput="checkPromo()" placeholder="ПРОМОКОД"></div>
         <div style="overflow-y:auto; flex:1">
@@ -130,28 +133,29 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const tg = window.Telegram.WebApp;
-    const userId = tg.initDataUnsafe?.user?.id || "user_v26_prod";
+    const userId = tg.initDataUnsafe?.user?.id || "user_final_stable";
     const myNick = "ID_" + String(userId).slice(0, 8);
 
-    let hk = 0, hp = 0.02, si = 0, cc = 0, usedPromos = [];
+    let hk = 0, hp = 0.02, si = 0, cc = 0, usedPromos = [], displayHk = 0;
 
     async function load() {
         document.getElementById('user-display').innerText = "НИК: " + myNick;
         const s = await get(child(ref(db), `users/${userId}`));
         if(s.exists()){
             const d = s.val();
-            hk = Number(d.hk) || 0; 
-            hp = Number(d.hp) || 0.02;
-            si = d.si || 0; 
-            cc = d.cc || 0;
+            hk = Number(d.hk) || 0; hp = Number(d.hp) || 0.02;
+            si = d.si || 0; cc = d.cc || 0;
             usedPromos = d.usedPromos || [];
+            displayHk = hk;
         }
         
+        // Плавное обновление цифр и майнинг
         setInterval(() => {
-            hk += (hp / 3600) / 10; 
-            document.getElementById('hk-num').innerText = hk.toFixed(8);
+            hk += (hp / 3600) / 30; 
+            displayHk += (hk - displayHk) * 0.12; // Плавное "дополнение"
+            document.getElementById('hk-num').innerText = displayHk.toFixed(8);
             document.getElementById('ps-num').innerText = (hp/3600).toFixed(5) + " HK/s";
-        }, 100);
+        }, 33);
 
         setInterval(save, 8000);
         updateUI();
@@ -180,12 +184,10 @@
     window.checkPromo = () => {
         let v = document.getElementById('p-input').value.trim().toUpperCase();
         if(usedPromos.includes(v)) return;
-
         let ok = false;
         if(v === "HK") { hk += 1; ok = true; }
         else if(v === "MAIN") { hp += 0.07; ok = true; }
         else if(v === "ADMIN") { hk += 5; ok = true; } 
-
         if(ok) {
             usedPromos.push(v);
             document.getElementById('p-input').value = "";
